@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"log"
 	"os/exec"
+	"strings"
 )
 
 func getBackend(username string) (string, error) {
@@ -19,7 +20,7 @@ func getBackend(username string) (string, error) {
 	}
 	err = cmd.Wait()
 	if err == nil {
-		if outBuf.String() == "200" {
+		if strings.Trim(outBuf.String(), "\r\n ") == "200" {
 			return "icewarp", nil
 		} else {
 			return "other", nil

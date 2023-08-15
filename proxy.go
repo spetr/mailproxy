@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -25,7 +26,13 @@ func (s *MyProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Login
 	if r.URL.Path == "/" && r.Method == "POST" {
-		body, _ := io.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			log.Println("Error reading body in login request:", err)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte("400 - Bad request"))
+			return
+		}
 		r.Body = io.NopCloser(bytes.NewBuffer(body)) // Assign back original body
 		if r.PostFormValue("username") != "" && r.PostFormValue("password") != "" {
 			log.Printf("Login request: %s\n", r.PostFormValue("username"))
@@ -34,6 +41,9 @@ func (s *MyProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			switch backend {
 			case "icewarp":
 				log.Println("IceWarp login")
+				authtoken, _ := getIceWarpToken(r.PostFormValue("username"), r.PostFormValue("password"), true)
+				http.Redirect(w, r, fmt.Sprintf("/webmail/?atoken=%s&language=en", authtoken), http.StatusFound)
+				return
 			case "other":
 				log.Println("Other login")
 				r.Body = io.NopCloser(bytes.NewBuffer(body)) // Assign back original body
@@ -46,6 +56,7 @@ func (s *MyProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
+		r.Body = io.NopCloser(bytes.NewBuffer(body)) // Assign back original body
 	}
 
 	// Other get requests
