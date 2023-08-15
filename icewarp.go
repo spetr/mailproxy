@@ -2,12 +2,14 @@ package main
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/xml"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 const iceWarpLoginXML = `
@@ -44,13 +46,21 @@ func getIceWarpToken(username string, password string, persistent bool) (string,
 	}
 	requestXml := fmt.Sprintf(iceWarpLoginXML, username, persistentInt, password)
 
-	apiURL, _ := url.JoinPath(remoteIcewarpParsed.String(), "icewarpapi/")
+	// TODO - hardcoded IP
+	apiURL, _ := url.JoinPath("https://192.168.94.225", "icewarpapi/")
 
-	req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer([]byte(requestXml)))
+	req, _ := http.NewRequest("POST", apiURL, bytes.NewBuffer([]byte(requestXml)))
 	req.Header.Set("Content-Type", "text/xml")
 
+	// TODO use transport from proxy
 	client := &http.Client{
-		Transport: proxyIcewarp.Transport,
+		Transport: &http.Transport{
+			TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
+			TLSHandshakeTimeout:   5 * time.Second,
+			MaxIdleConns:          100,
+			IdleConnTimeout:       90 * time.Second,
+			ResponseHeaderTimeout: 10 * time.Second,
+		},
 	}
 	resp, err := client.Do(req)
 	if err != nil {

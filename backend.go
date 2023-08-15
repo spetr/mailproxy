@@ -12,7 +12,7 @@ func getBackend(username string) (string, error) {
 		err    error
 		outBuf bytes.Buffer
 	)
-	cmd := exec.Command("/usr/share/nginx/html/getserver.sh", username)
+	cmd := exec.Command(config.External.Auth.Script, username)
 	cmd.Stdout = &outBuf
 	if err = cmd.Start(); err != nil {
 		log.Printf("Get backend error: %s\n", err.Error())

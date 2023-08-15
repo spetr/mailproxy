@@ -15,13 +15,17 @@ type MyProxy struct {
 }
 
 func (s *MyProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Println("Request:", r.URL.Path)
+	//log.Println("Request:", r.URL.Path)
 
-	// Websocket
-	if r.Method == "GET" && strings.Contains(strings.ToLower(r.Header.Get("Connection")), "upgrade") {
-		log.Printf("IceWarp websocket: %s\n", r.URL)
-		proxyIcewarp.ServeHTTP(w, r)
-		return
+	// Websocket to "/" is handled with first backend of icewarp type
+	if r.Method == "GET" && r.URL.Path == "/" && strings.Contains(strings.ToLower(r.Header.Get("Connection")), "upgrade") {
+		for _, backend := range config.Backends {
+			if backend.Type == "icewarp" {
+				log.Printf("IceWarp websocket: %s\n", r.URL)
+				backend.proxy.ServeHTTP(w, r)
+				return
+			}
+		}
 	}
 
 	// Login
@@ -45,14 +49,27 @@ func (s *MyProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				http.Redirect(w, r, fmt.Sprintf("/webmail/?atoken=%s&language=en", authtoken), http.StatusFound)
 				return
 			case "other":
-				log.Println("Other login")
 				r.Body = io.NopCloser(bytes.NewBuffer(body)) // Assign back original body
-				proxyOther.ServeHTTP(w, r)
+				// Handle with first backend of not icewarp type
+				for _, backend := range config.Backends {
+					if backend.Type != "icewarp" {
+						log.Println("Other login")
+						backend.proxy.ServeHTTP(w, r)
+						return
+					}
+				}
 				return
 			default:
 				log.Println("Unknown backend (serving as other login)")
 				r.Body = io.NopCloser(bytes.NewBuffer(body)) // Assign back original body
-				proxyOther.ServeHTTP(w, r)
+				// Handle with default backend
+				for _, backend := range config.Backends {
+					if backend.Name == config.External.Default {
+						log.Println("Login handled with default backend")
+						backend.proxy.ServeHTTP(w, r)
+						return
+					}
+				}
 				return
 			}
 		}
@@ -82,13 +99,24 @@ func (s *MyProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		strings.HasPrefix(r.URL.Path, "/ischedule") ||
 		strings.HasPrefix(r.URL.Path, "/reports") ||
 		strings.HasPrefix(r.URL.Path, "/-.._._.--.._") {
-		log.Println("IceWarp request:", r.URL)
-		proxyIcewarp.ServeHTTP(w, r)
+		for _, backend := range config.Backends {
+			if backend.Type == "icewarp" {
+				log.Printf("IceWarp typical URL: %s\n", r.URL)
+				backend.proxy.ServeHTTP(w, r)
+				return
+			}
+		}
 		return
 	}
 
-	log.Println("Other request:", r.URL)
-	proxyOther.ServeHTTP(w, r)
-	return
+	// Handle with default backend
+	for i := range config.Backends {
+		if config.Backends[i].Name == config.External.Default {
+			log.Printf("Request handled with default backend: %s\n", r.URL)
+			config.Backends[i].proxy.ServeHTTP(w, r)
+			return
+		}
+	}
 
+	log.Printf("Unhandled request: %s\n", r.URL)
 }

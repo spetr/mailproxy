@@ -1,14 +1,13 @@
 external:
-  name: 192.168.94.204 # Name of the external host (used in the HTTP redirect)
+  name: 127.0.0.1 # Name of the external host (used in the HTTP redirect)
   default: zimbra # Default backend to use
+  address: 127.0.0.1
   http: # HTTP settings
     enabled: true
-    address: 127.0.0.1
     port: 8080
     https-redirect: true
   https: # HTTPS settings
     enabled: false
-    address: 127.0.0.1
     port: 8443
     letsencrypt: false
     cert: /etc/ssl/certs/mailproxy.pem
@@ -34,9 +33,9 @@ backends: # List of backends
 - name: icewarp
   type: icewarp
   address: 192.168.94.225
+  check-cert: false
   http:
     encryption: on
-    check-cert: false
     port: 443
   pop3:
     encryption: off
@@ -48,9 +47,9 @@ backends: # List of backends
 - name: zimbra
   type: zimbra
   address: 192.168.94.226
+  check-cert: false
   http:
     encryption: on
-    check-cert: false
     port: 443
   pop3:
     encryption: off

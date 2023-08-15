@@ -3,23 +3,25 @@ package main
 import (
 	"log"
 	"net/http"
-	"net/http/httputil"
-	"net/url"
 )
 
 var (
-	remoteIcewarp   = "https://192.168.94.225"
-	remoteOther     = "https://192.168.94.226"
-	externalAddress = "192.168.94.204"
+//remoteIcewarp = "https://192.168.94.225"
+//remoteOther   = "https://192.168.94.226"
 
-	remoteIcewarpParsed *url.URL
-	remoteOtherParsed   *url.URL
+//remoteIcewarpParsed *url.URL
+//remoteOtherParsed   *url.URL
 
-	proxyIcewarp *httputil.ReverseProxy
-	proxyOther   *httputil.ReverseProxy
+// proxyIcewarp *httputil.ReverseProxy
+// proxyOther   *httputil.ReverseProxy
 )
 
 func main() {
+
+	log.Println("Loading config")
+	loadConfig()
+
+	log.Println("Starting proxy server")
 
 	proxy := &MyProxy{}
 	http.Handle("/", proxy)
