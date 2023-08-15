@@ -129,15 +129,15 @@ func loadConfig() {
 	for _, file := range configFile {
 		if _, err := os.Stat(file); err == nil {
 			configFileFound = true
-			log.Println("Config: Loading config file", file)
+			log.Println("[Config] Loading config file", file)
 			yamlFile, err := os.ReadFile(file)
 			if err != nil {
-				log.Printf("Config: Error reading config file: #%v ", err)
+				log.Printf("[Config] Error reading config file: #%v ", err)
 				os.Exit(1)
 			}
 			err = yaml.Unmarshal(yamlFile, config)
 			if err != nil {
-				log.Printf("Config: Error parsing config file: #%v ", err)
+				log.Printf("[Config] Error parsing config file: #%v ", err)
 				os.Exit(1)
 			}
 			break
@@ -146,17 +146,17 @@ func loadConfig() {
 
 	// Check config
 	if !configFileFound {
-		log.Printf("Config: No config file found. %v\n", configFile)
+		log.Printf("[Config] No config file found. %v\n", configFile)
 		os.Exit(1)
 	}
 
 	if config.External.Name == "" {
-		log.Println("Config: External name is not configured.")
+		log.Println("[Config] External name is not configured.")
 		os.Exit(1)
 	}
 
 	if config.External.Default == "" {
-		log.Println("Config default backend is not configured.")
+		log.Println("[Config] Default backend is not configured.")
 		os.Exit(1)
 	}
 
@@ -186,29 +186,29 @@ func loadConfig() {
 
 	if config.External.Auth.Type == "script" {
 		if config.External.Auth.Script == "" {
-			log.Println("Config: Auth script is not configured.")
+			log.Println("[Config] Auth script is not configured.")
 			os.Exit(1)
 		}
 		if _, err := os.Stat(config.External.Auth.Script); os.IsNotExist(err) {
-			log.Println("Config: Auth script does not exist.")
+			log.Println("[Config] Auth script does not exist.")
 			os.Exit(1)
 		}
 	}
 
 	// Check if at least one backend is configured
 	if len(config.Backends) == 0 {
-		log.Println("Config: No backends configured.")
+		log.Println("[Config] No backends configured.")
 		os.Exit(1)
 	}
 
 	// Setup backend configuration
 	for i := range config.Backends {
 		if config.Backends[i].Name == "" {
-			log.Println("Config: Backend name is not configured.")
+			log.Println("[Config] Backend name is not configured.")
 			os.Exit(1)
 		}
 		if config.Backends[i].Type == "" {
-			log.Println("Config: Backend type is not configured.")
+			log.Println("[Config] Backend type is not configured.")
 			os.Exit(1)
 		}
 

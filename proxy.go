@@ -15,68 +15,19 @@ type MyProxy struct {
 }
 
 func (s *MyProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	//log.Println("Request:", r.URL.Path)
 
 	// Websocket to "/" is handled with first backend of icewarp type
 	if r.Method == "GET" && r.URL.Path == "/" && strings.Contains(strings.ToLower(r.Header.Get("Connection")), "upgrade") {
 		for _, backend := range config.Backends {
 			if backend.Type == "icewarp" {
-				log.Printf("IceWarp websocket: %s\n", r.URL)
+				log.Printf("[IceWarp Websocket] %s %s\n", r.RemoteAddr, r.URL)
 				backend.proxy.ServeHTTP(w, r)
 				return
 			}
 		}
 	}
 
-	// Login
-	if r.URL.Path == "/" && r.Method == "POST" {
-		body, err := io.ReadAll(r.Body)
-		if err != nil {
-			log.Println("Error reading body in login request:", err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("400 - Bad request"))
-			return
-		}
-		r.Body = io.NopCloser(bytes.NewBuffer(body)) // Assign back original body
-		if r.PostFormValue("username") != "" && r.PostFormValue("password") != "" {
-			log.Printf("Login request: %s\n", r.PostFormValue("username"))
-			backend, _ := getBackend(r.PostFormValue("username"))
-			log.Printf("Backend: %s\n", backend)
-			switch backend {
-			case "icewarp":
-				log.Println("IceWarp login")
-				authtoken, _ := getIceWarpToken(r.PostFormValue("username"), r.PostFormValue("password"), true)
-				http.Redirect(w, r, fmt.Sprintf("/webmail/?atoken=%s&language=en", authtoken), http.StatusFound)
-				return
-			case "other":
-				r.Body = io.NopCloser(bytes.NewBuffer(body)) // Assign back original body
-				// Handle with first backend of not icewarp type
-				for _, backend := range config.Backends {
-					if backend.Type != "icewarp" {
-						log.Println("Other login")
-						backend.proxy.ServeHTTP(w, r)
-						return
-					}
-				}
-				return
-			default:
-				log.Println("Unknown backend (serving as other login)")
-				r.Body = io.NopCloser(bytes.NewBuffer(body)) // Assign back original body
-				// Handle with default backend
-				for _, backend := range config.Backends {
-					if backend.Name == config.External.Default {
-						log.Println("Login handled with default backend")
-						backend.proxy.ServeHTTP(w, r)
-						return
-					}
-				}
-				return
-			}
-		}
-		r.Body = io.NopCloser(bytes.NewBuffer(body)) // Assign back original body
-	}
-
-	// Other get requests
+	// Typical icewarp URLs are handled with first backend of icewarp type
 	if strings.HasPrefix(r.URL.Path, "/webmail") ||
 		strings.HasPrefix(r.URL.Path, "/webdav") ||
 		strings.HasPrefix(r.URL.Path, "/icewarpapi") ||
@@ -101,12 +52,58 @@ func (s *MyProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		strings.HasPrefix(r.URL.Path, "/-.._._.--.._") {
 		for _, backend := range config.Backends {
 			if backend.Type == "icewarp" {
-				log.Printf("IceWarp typical URL: %s\n", r.URL)
+				log.Printf("[IceWarp URL] %s %s\n", r.RemoteAddr, r.URL)
 				backend.proxy.ServeHTTP(w, r)
 				return
 			}
 		}
-		return
+	}
+
+	// Zimbra login
+	if r.URL.Path == "/" && r.Method == "POST" {
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			log.Println("[Zimbra login] Error reading body in login request:", err)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte("400 - Bad request"))
+			return
+		}
+		r.Body = io.NopCloser(bytes.NewBuffer(body)) // Assign back original body
+		if r.PostFormValue("username") != "" && r.PostFormValue("password") != "" {
+			backend, _ := getBackend(r.PostFormValue("username"))
+			log.Printf("[Zimbra loginform] %s %s %s\n", r.RemoteAddr, r.URL, r.PostFormValue("username"))
+			switch backend {
+			case "icewarp": // TODO
+				authtoken, _ := getIceWarpToken(r.PostFormValue("username"), r.PostFormValue("password"), true)
+				log.Printf("[IceWarp token] %s %s\n", r.PostFormValue("username"), authtoken)
+				http.Redirect(w, r, fmt.Sprintf("/webmail/?atoken=%s&language=en", authtoken), http.StatusFound)
+				return
+			case "other": // TODO
+				r.Body = io.NopCloser(bytes.NewBuffer(body)) // Assign back original body
+				// Handle with first backend of not icewarp type
+				for _, backend := range config.Backends {
+					if backend.Type != "icewarp" { // TODO
+						log.Printf("[Zimbra login] %s %s %s\n", r.RemoteAddr, r.URL, r.PostFormValue("username"))
+						backend.proxy.ServeHTTP(w, r)
+						return
+					}
+				}
+				return
+			default:
+				log.Println("Unknown backend (serving as other login)")
+				r.Body = io.NopCloser(bytes.NewBuffer(body)) // Assign back original body
+				// Handle with default backend
+				for _, backend := range config.Backends {
+					if backend.Name == config.External.Default {
+						log.Println("Login handled with default backend")
+						backend.proxy.ServeHTTP(w, r)
+						return
+					}
+				}
+				return
+			}
+		}
+		r.Body = io.NopCloser(bytes.NewBuffer(body)) // Assign back original body
 	}
 
 	// Handle with default backend

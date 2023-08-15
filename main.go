@@ -18,10 +18,9 @@ var (
 
 func main() {
 
-	log.Println("Loading config")
 	loadConfig()
 
-	log.Println("Starting proxy server")
+	log.Println("[HTTP] Starting proxy server")
 
 	proxy := &MyProxy{}
 	http.Handle("/", proxy)
