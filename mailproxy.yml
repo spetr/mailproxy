@@ -1,32 +1,36 @@
 external:
-  name: 192.168.94.204
-  default: zimbra
-  http:
+  name: 192.168.94.204 # Name of the external host (used in the HTTP redirect)
+  default: zimbra # Default backend to use
+  http: # HTTP settings
     enabled: true
     address: 127.0.0.1
     port: 8080
     https-redirect: true
-  https:
+  https: # HTTPS settings
     enabled: false
     address: 127.0.0.1
     port: 8443
     letsencrypt: false
     cert: /etc/ssl/certs/mailproxy.pem
     key: /etc/ssl/private/mailproxy.key
-  pop3:
+  pop3: # POP3 settings
     enabled: false
-  pop3s:
+    port: 110
+  pop3s: # POP3S settings
     enabled: false
-  imap:
+    port: 995
+  imap: # IMAP settings
     enabled: false
-  imaps:
+    port: 143
+  imaps: # IMAPS settings
     enabled: false
-  auth:
+    port: 993
+  auth: # Authentication settings (for user switching between backends)
     type: script
     script: /usr/local/bin/mailproxy-auth.sh
     ldap:
 
-backend:
+backends: # List of backends
 - name: icewarp
   type: icewarp
   address: 192.168.94.225
@@ -40,8 +44,6 @@ backend:
   imap:
     encryption: off
     port: 143
-
-
 
 - name: zimbra
   type: zimbra
