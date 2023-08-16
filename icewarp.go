@@ -46,8 +46,14 @@ func getIceWarpToken(username string, password string, persistent bool) (string,
 	}
 	requestXml := fmt.Sprintf(iceWarpLoginXML, username, persistentInt, password)
 
-	// TODO - hardcoded IP
-	apiURL, _ := url.JoinPath("https://192.168.94.225", "icewarpapi/")
+	apiURL := ""
+	for i := range config.Backends {
+		if config.Backends[i].Type == "icewarp" {
+			apiURL = fmt.Sprintf("https://%s:%d", config.Backends[i].Address, config.Backends[i].Http.Port)
+			break
+		}
+	}
+	apiURL, _ = url.JoinPath(apiURL, "icewarpapi/")
 
 	req, _ := http.NewRequest("POST", apiURL, bytes.NewBuffer([]byte(requestXml)))
 	req.Header.Set("Content-Type", "text/xml")
