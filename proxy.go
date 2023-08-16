@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httputil"
+	"net/url"
 	"strings"
 )
 
@@ -76,7 +77,7 @@ func (s *MyProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			case "icewarp": // TODO
 				authtoken, _ := getIceWarpToken(r.PostFormValue("username"), r.PostFormValue("password"), true)
 				log.Printf("[IceWarp token] %s %s\n", r.PostFormValue("username"), authtoken)
-				http.Redirect(w, r, fmt.Sprintf("/webmail/?atoken=%s&language=en", authtoken), http.StatusFound)
+				http.Redirect(w, r, fmt.Sprintf("/webmail/?atoken=%s&language=en", url.QueryEscape(authtoken)), http.StatusFound)
 				return
 			case "other": // TODO
 				r.Body = io.NopCloser(bytes.NewBuffer(body)) // Assign back original body

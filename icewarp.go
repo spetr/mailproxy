@@ -80,7 +80,6 @@ func getIceWarpToken(username string, password string, persistent bool) (string,
 		log.Printf("IceWarp API error (XML parser): %s\n", err.Error())
 		return "", err
 	}
-	log.Printf("IceWarp authtoken recieved: %s\n", IceWarpAPIResponse.Query.Result.AuthToken)
 
 	return IceWarpAPIResponse.Query.Result.AuthToken, nil
 }
