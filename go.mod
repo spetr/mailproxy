@@ -1,4 +1,4 @@
-module iwproxy
+module mailproxy
 
 go 1.21
 
