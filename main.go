@@ -25,8 +25,9 @@ func main() {
 	proxy := &MyProxy{}
 	http.Handle("/", proxy)
 	server := &http.Server{
-		Addr:    ":8080",
-		Handler: proxy,
+		Addr:           ":8080",
+		Handler:        proxy,
+		MaxHeaderBytes: 2 * 1024 * 1024 * 1024, // 2GB max header size
 	}
 	log.Fatal(server.ListenAndServe())
 
