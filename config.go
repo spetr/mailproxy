@@ -230,7 +230,7 @@ func loadConfig() {
 			TLSHandshakeTimeout:   5 * time.Second,
 			MaxIdleConns:          100,
 			IdleConnTimeout:       90 * time.Second,
-			ResponseHeaderTimeout: 10 * time.Second,
+			ResponseHeaderTimeout: 60 * time.Second,
 		}
 	}
 
