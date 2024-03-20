@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"time"
 )
 
 var (
@@ -25,9 +26,12 @@ func main() {
 	proxy := &MyProxy{}
 	http.Handle("/", proxy)
 	server := &http.Server{
-		Addr:           ":8080",
-		Handler:        proxy,
-		MaxHeaderBytes: 2 * 1024 * 1024 * 1024, // 2GB max header size
+		Addr:              ":8080",
+		Handler:           proxy,
+		MaxHeaderBytes:    4 * 1024 * 1024 * 1024, // 4GB max header size
+		ReadTimeout:       120 * time.Second,
+		ReadHeaderTimeout: 120 * time.Second,
+		WriteTimeout:      120 * time.Second,
 	}
 	log.Fatal(server.ListenAndServe())
 
